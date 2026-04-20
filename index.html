@@ -1,264 +1,256 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UTGSL - Smart City OS v6.0</title>
-    
-    <!-- External Dependencies (CDN) -->
-    <script src="https://tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com"></script>
-    <script crossorigin src="https://unpkg.com"></script>
-    <script src="https://unpkg.com"></script>
-    <link href="https://googleapis.com" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        :root { --apple-blue: #0071e3; --tesla-red: #e82127; }
-        body { font-family: 'Inter', sans-serif; transition: all 0.5s ease; margin: 0; overflow: hidden; }
-        
-        /* Theme Logic */
-        body.dark { background: #000; color: #fff; }
-        body.light { background: #f5f5f7; color: #1d1d1f; }
+<title>UTGSL - UN Smart City Command System</title>
 
-        /* Glassmorphism */
-        .glass { backdrop-filter: blur(30px); border: 1px solid; border-radius: 28px; transition: all 0.3s; }
-        body.dark .glass { background: rgba(20, 20, 20, 0.7); border-color: rgba(255,255,255,0.1); }
-        body.light .glass { background: rgba(255, 255, 255, 0.8); border-color: rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
+<script src="https://cdn.tailwindcss.com"></script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-        /* Map & 3D Elements */
-        .map-svg { filter: drop-shadow(0 20px 50px rgba(0,0,0,0.5)); }
-        .bar-3d { transition: height 1s cubic-bezier(0.4, 0, 0.2, 1); }
-        
-        /* Emergency Mode Animation */
-        .emergency-pulse { animation: red-alert 2s infinite; }
-        @keyframes red-alert { 
-            0%, 100% { border-color: var(--tesla-red); box-shadow: 0 0 10px rgba(232, 33, 39, 0.2); }
-            50% { border-color: #ff5f57; box-shadow: 0 0 30px rgba(232, 33, 39, 0.5); }
-        }
+<style>
+body { margin:0; font-family:system-ui; transition:0.3s; }
 
-        /* CCTV Scanning Line */
-        .scanline { width: 100%; height: 2px; background: rgba(0, 113, 227, 0.3); position: absolute; animation: scan 4s linear infinite; }
-        @keyframes scan { from { top: 0; } to { top: 100%; } }
+.dark { background:#050b18; color:#e5e7eb; }
+.light { background:#f8fafc; color:#0f172a; }
 
-        .ticker { font-family: 'JetBrains Mono', monospace; }
-    </style>
+.zone {
+  cursor:pointer;
+  transition:0.3s;
+}
+
+.low { fill:#22c55e; opacity:0.7; }
+.mid { fill:#f59e0b; opacity:0.8; }
+.high { fill:#ef4444; opacity:0.9; }
+
+.panel {
+  background:rgba(15,23,42,0.9);
+  color:white;
+  backdrop-filter:blur(12px);
+}
+
+.card {
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
+  padding:10px;
+  border-radius:10px;
+}
+
+.cctv {
+  background:#000;
+  height:120px;
+  border-radius:10px;
+  overflow:hidden;
+  position:relative;
+}
+
+.cctv::after {
+  content:"LIVE CCTV FEED";
+  position:absolute;
+  bottom:5px;
+  left:5px;
+  font-size:10px;
+  color:#22c55e;
+}
+</style>
 </head>
+
 <body class="dark">
-    <div id="root"></div>
+<div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+<script type="text/babel">
+const { useState, useEffect } = React;
 
-        const App = () => {
-            const [isDark, setIsDark] = useState(true);
-            const [lang, setLang] = useState('PT');
-            const [view, setView] = useState('map'); // map, 3d, cctv
-            const [isEmergency, setIsEmergency] = useState(false);
-            const [budget, setBudget] = useState(4280500);
-            const [reportOpen, setReportOpen] = useState(false);
+// ---------------- ZONES ----------------
+const zones = [
+ {name:"Luanda Centro", x:120, y:80},
+ {name:"Viana", x:200, y:100},
+ {name:"Cacuaco", x:60, y:120},
+ {name:"Kilamba", x:180, y:180},
+ {name:"Sambizanga", x:100, y:150},
+];
 
-            const content = {
-                PT: {
-                    nav: ["Mapa", "Simulação 3D", "Vigilância", "Relatórios"],
-                    title: "Comando Central Luanda",
-                    sara: "SARA IA: Risco de transbordo no Sambizanga. Mobilizar brigada 04.",
-                    budgetLabel: "Investimento Operacional (AOA)",
-                    emergencyBtn: "Protocolo de Emergência"
-                },
-                EN: {
-                    nav: ["Map", "3D Simulation", "Surveillance", "Reports"],
-                    title: "Luanda Central Command",
-                    sara: "SARA AI: Overflow risk in Sambizanga. Deploying Brigade 04.",
-                    budgetLabel: "Operational Investment (AOA)",
-                    emergencyBtn: "Emergency Protocol"
-                }
-            };
+// ---------------- LANG ----------------
+const lang = {
+ pt:{ title:"Centro ONU - Gestão Urbana", alert:"Alerta", chat:"Assistente", map:"Mapa Operacional" },
+ en:{ title:"UN Urban Command System", alert:"Alert", chat:"Assistant", map:"Operational Map" }
+};
 
-            const t = content[lang];
+function App(){
 
-            // Real-time Simulation Engine
-            useEffect(() => {
-                const interval = setInterval(() => {
-                    setBudget(prev => prev + (Math.random() * 250));
-                }, 1500);
-                document.body.className = isDark ? 'dark' : 'light';
-                return () => clearInterval(interval);
-            }, [isDark]);
+const [dark,setDark]=useState(true);
+const [events,setEvents]=useState([]);
+const [alerts,setAlerts]=useState([]);
+const [mode,setMode]=useState("pt");
+const [chat,setChat]=useState([
+ {role:"system",text:"Sistema ONU Smart City ativo."}
+]);
 
-            return (
-                <div className="h-screen w-screen flex flex-col p-4 md:p-6 gap-6 overflow-hidden">
-                    
-                    {/* GLOBAL HEADER */}
-                    <header className="glass px-8 py-4 flex items-center justify-between z-50">
-                        <div className="flex items-center gap-10">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white shadow-lg">U</div>
-                                <div className="leading-none">
-                                    <h1 className="font-black text-xl tracking-tighter uppercase">UTGSL</h1>
-                                    <p className="text-[9px] opacity-50 uppercase tracking-[0.2em]">Smart City OS</p>
-                                </div>
-                            </div>
-                            <nav className="hidden lg:flex gap-8">
-                                {t.nav.map((item, i) => (
-                                    <button 
-                                        key={i} 
-                                        onClick={() => item.includes('Relat') || item.includes('Repor') ? setReportOpen(true) : setView(['map', '3d', 'cctv'][i])}
-                                        className={`text-[11px] font-bold uppercase tracking-widest transition-all ${view === ['map', '3d', 'cctv'][i] ? 'text-blue-500 scale-110' : 'opacity-40 hover:opacity-100'}`}
-                                    >
-                                        {item}
-                                    </button>
-                                ))}
-                            </nav>
-                        </div>
+// ---------------- ENGINE ----------------
+useEffect(()=>{
 
-                        <div className="flex items-center gap-6">
-                            <div className="flex glass rounded-full p-1 border-none bg-black/10 dark:bg-white/10">
-                                {['PT', 'EN'].map(l => (
-                                    <button key={l} onClick={() => setLang(l)} className={`px-3 py-1 rounded-full text-[10px] font-bold transition ${lang === l ? 'bg-blue-600 text-white shadow-lg' : 'opacity-40'}`}>{l}</button>
-                                ))}
-                            </div>
-                            <button onClick={() => setIsDark(!isDark)} className="text-xl hover:scale-120 transition">
-                                {isDark ? '☀️' : '🌙'}
-                            </button>
-                        </div>
-                    </header>
+const t = setInterval(()=>{
 
-                    {/* MAIN INTERFACE */}
-                    <div className="flex-1 flex flex-col lg:flex-row gap-6">
-                        
-                        {/* LEFT: FINANCIAL & AI PANEL */}
-                        <aside className="w-full lg:w-96 flex flex-col gap-6">
-                            <div className={`glass p-8 flex flex-col gap-6 ${isEmergency ? 'emergency-pulse border-red-500' : ''}`}>
-                                <div>
-                                    <p className="text-[10px] opacity-50 uppercase font-bold tracking-widest mb-1">{t.budgetLabel}</p>
-                                    <p className="text-3xl font-black ticker tracking-tighter">
-                                        {budget.toLocaleString('pt-AO', { minimumFractionDigits: 2 })}
-                                    </p>
-                                </div>
-                                <button 
-                                    onClick={() => setIsEmergency(!isEmergency)}
-                                    className={`w-full py-4 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all ${isEmergency ? 'bg-red-600 text-white shadow-2xl shadow-red-900/40' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
-                                >
-                                    {isEmergency ? '🚨 Protocolo Crítico' : t.emergencyBtn}
-                                </button>
-                            </div>
+ const z = zones[Math.floor(Math.random()*zones.length)];
+ const sev = Math.random();
 
-                            <div className="glass p-8 flex-1 relative overflow-hidden">
-                                <div className="flex items-center gap-2 mb-6">
-                                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
-                                    <h3 className="text-[10px] font-black uppercase opacity-40">SARA Intelligence</h3>
-                                </div>
-                                <p className="text-sm leading-relaxed italic opacity-80 mb-6 font-serif">"{t.sara}"</p>
-                                <div className="space-y-4">
-                                    <div className="flex justify-between text-xs border-b border-white/5 pb-2">
-                                        <span className="opacity-50">Eficiência Geral</span>
-                                        <span className="font-bold text-green-500">92.4%</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs border-b border-white/5 pb-2">
-                                        <span className="opacity-50">Frota Online</span>
-                                        <span className="font-bold">48/50</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </aside>
+ const e = {zone:z.name, sev};
 
-                        {/* CENTER: DYNAMIC VIEWPORT (MAP / 3D / CCTV) */}
-                        <main className="flex-1 glass relative overflow-hidden flex flex-col">
-                            
-                            {view === 'map' && (
-                                <div className="w-full h-full flex flex-col p-12 items-center justify-center">
-                                    <div className="absolute top-8 left-8">
-                                        <h2 className="text-xs font-black uppercase opacity-30 tracking-[0.5em]">Luanda Digital Twin</h2>
-                                    </div>
-                                    <svg viewBox="0 0 500 400" className="w-full max-w-2xl map-svg">
-                                        <path 
-                                            fill={isDark ? "#1a1a1a" : "#e5e5e7"} 
-                                            stroke={isEmergency ? "#ef4444" : "#0071e3"} 
-                                            strokeWidth="1.5"
-                                            d="M150,50 C180,40 220,60 250,80 C300,110 350,150 320,220 C280,300 200,350 120,320 C80,300 50,220 70,150 C90,80 120,60 150,50 Z" 
-                                        />
-                                        <circle cx="200" cy="180" r="6" fill={isEmergency ? "#ef4444" : "#0071e3"} className="animate-pulse" />
-                                        <circle cx="280" cy="140" r="4" fill="#0071e3" opacity="0.5" />
-                                    </svg>
-                                </div>
-                            )}
+ setEvents(prev=>[e,...prev.slice(0,15)]);
 
-                            {view === '3d' && (
-                                <div className="w-full h-full flex items-end justify-around p-20">
-                                    {[80, 45, 95, 30, 60].map((h, i) => (
-                                        <div key={i} className="flex flex-col items-center gap-4 w-full">
-                                            <div 
-                                                className={`w-16 rounded-t-xl bar-3d shadow-2xl ${isEmergency && h > 70 ? 'bg-red-500' : 'bg-blue-600'}`}
-                                                style={{ height: `${h * 4}px`, opacity: h/100 + 0.3 }}
-                                            ></div>
-                                            <span className="text-[10px] font-bold opacity-40 uppercase">Zona 0{i+1}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+ if(sev>0.75){
+  setAlerts(prev=>[
+   `⚠ CRITICAL: ${z.name} requires immediate intervention`,
+   ...prev.slice(0,6)
+  ]);
+ }
 
-                            {view === 'cctv' && (
-                                <div className="w-full h-full grid grid-cols-2 p-6 gap-4">
-                                    {[1,2,3,4].map(i => (
-                                        <div key={i} className="bg-black rounded-3xl relative overflow-hidden border border-white/5">
-                                            <div className="scanline"></div>
-                                            <div className="absolute top-4 left-4 text-[9px] font-mono opacity-50">CAM_0{i} // LIVE</div>
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <div className="w-8 h-8 border-2 border-white/10 rounded-full animate-pulse"></div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+},3000);
 
-                            {/* EMERGENCY OVERLAY */}
-                            {isEmergency && <div className="absolute inset-0 pointer-events-none border-[20px] border-red-600/10 animate-pulse"></div>}
-                        </main>
-                    </div>
+return ()=>clearInterval(t);
 
-                    {/* REPORT MODAL */}
-                    {reportOpen && (
-                        <div className="absolute inset-0 z-[100] bg-black/90 flex items-center justify-center p-6 md:p-12">
-                            <div className="bg-white text-black w-full max-w-3xl rounded-[40px] p-12 shadow-2xl flex flex-col relative overflow-hidden">
-                                <button onClick={() => setReportOpen(false)} className="absolute top-8 right-8 text-2xl">✕</button>
-                                <div className="border-b-2 border-black pb-6 mb-8">
-                                    <h2 className="text-3xl font-black uppercase tracking-tighter italic">Relatório Estratégico</h2>
-                                    <p className="text-xs font-bold text-gray-400 font-mono tracking-widest">UTGSL COMMAND / EMISSÃO AUTOMÁTICA</p>
-                                </div>
-                                <div className="flex-1 space-y-8 overflow-y-auto pr-4">
-                                    <section>
-                                        <h4 className="text-[10px] font-black text-blue-600 uppercase mb-2">Resumo de Performance</h4>
-                                        <p className="text-sm font-serif leading-relaxed">A análise volumétrica via satélite indica que o setor de <b>Viana</b> opera em carga máxima. O investimento de {budget.toLocaleString()} KZ é justificado pelo redirecionamento imediato de recursos hídricos.</p>
-                                    </section>
-                                    <div className="grid grid-cols-3 gap-6">
-                                        <div className="p-4 bg-gray-50 rounded-2xl">
-                                            <p className="text-[8px] text-gray-400 uppercase">Eficiência</p>
-                                            <p className="text-xl font-bold">92.4%</p>
-                                        </div>
-                                        <div className="p-4 bg-gray-50 rounded-2xl">
-                                            <p className="text-[8px] text-gray-400 uppercase">Brigadas</p>
-                                            <p className="text-xl font-bold">12 Ativas</p>
-                                        </div>
-                                        <div className="p-4 bg-red-50 rounded-2xl">
-                                            <p className="text-[8px] text-red-400 uppercase">Alertas</p>
-                                            <p className="text-xl font-bold text-red-600">03 Críticos</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="mt-12 flex justify-between items-center border-t pt-8">
-                                    <p className="text-[9px] text-gray-400 uppercase font-mono italic">Validação Digital: UTGSL-AI-88229X</p>
-                                    <button className="bg-black text-white px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:scale-105 transition">Exportar PDF</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
+},[]);
 
-        const root = ReactDOM.createRoot(document.getElementById("root"));
-        root.render(<App />);
-    </script>
+// ---------------- HEAT ----------------
+const heat = (z)=>{
+ const c = events.filter(e=>e.zone===z).length;
+ if(c>6) return "high";
+ if(c>3) return "mid";
+ return "low";
+};
+
+// ---------------- CHAT ----------------
+const send=(t)=>{
+ setChat(prev=>[
+  ...prev,
+  {role:"user",text:t},
+  {role:"bot",text:"Request processed by UN Command AI."}
+ ]);
+};
+
+// ---------------- CCTV SIM ----------------
+const CCTV = ({zone})=>(
+<div className="cctv">
+ <div className="absolute inset-0 bg-gradient-to-r from-black via-gray-900 to-black opacity-80"></div>
+ <div className="absolute text-xs text-green-400 p-2">
+  {zone} - LIVE MONITORING
+ </div>
+</div>
+);
+
+// ---------------- UI ----------------
+return(
+<div className={dark?"dark":"light"} style={{height:"100vh",display:"flex"}}>
+
+{/* MAP */}
+<div style={{width:"50%",padding:10}}>
+
+<h2 className="font-bold mb-2">
+{lang[mode].map}
+</h2>
+
+<svg viewBox="0 0 300 300">
+
+{zones.map((z,i)=>(
+<circle
+ key={i}
+ cx={z.x}
+ cy={z.y}
+ r="28"
+ className={`zone ${heat(z.name)}`}
+ onClick={()=>send("Incident triggered in "+z.name)}
+/>
+))}
+
+</svg>
+
+{/* CCTV */}
+<div className="grid grid-cols-2 gap-2 mt-3">
+
+{zones.slice(0,4).map((z,i)=>(
+<CCTV key={i} zone={z.name}/>
+))}
+
+</div>
+
+</div>
+
+{/* COMMAND PANEL */}
+<div className="panel w-1/2 flex flex-col">
+
+{/* HEADER */}
+<div className="p-3 border-b border-white/10 flex justify-between">
+<h1 className="font-bold">
+{lang[mode].title}
+</h1>
+
+<div className="flex gap-2">
+
+<button onClick={()=>setDark(!dark)} className="text-xs px-2 py-1 bg-gray-700 rounded">
+🌙
+</button>
+
+<button onClick={()=>setMode(mode==="pt"?"en":"pt")} className="text-xs px-2 py-1 bg-gray-700 rounded">
+{mode.toUpperCase()}
+</button>
+
+</div>
+</div>
+
+{/* ALERTS */}
+<div className="p-3 space-y-2">
+
+<h3 className="text-sm text-gray-300">Global Alerts</h3>
+
+{alerts.map((a,i)=>(
+<div key={i} className="card text-xs text-red-300">
+{a}
+</div>
+))}
+
+</div>
+
+{/* CHAT */}
+<div className="flex-1 p-3 overflow-y-auto space-y-2">
+
+{chat.map((m,i)=>(
+<div key={i} className={m.role==="user"?"text-right":""}>
+<div className="inline-block px-3 py-2 rounded bg-gray-800 text-xs">
+{m.text}
+</div>
+</div>
+))}
+
+</div>
+
+{/* INPUT */}
+<div className="p-3 border-t border-white/10 flex">
+<input
+ className="flex-1 px-2 py-1 text-black"
+ placeholder="Command..."
+ onKeyDown={(e)=>e.key==="Enter" && send(e.target.value)}
+/>
+</div>
+
+{/* KPI */}
+<div className="p-3 border-t border-white/10 text-xs">
+
+<p>Total Events: {events.length}</p>
+<p>Critical Zones: {events.filter(e=>e.sev>0.75).length}</p>
+
+</div>
+
+</div>
+
+</div>
+);
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+
 </body>
-    </html>
-    
+</html>
