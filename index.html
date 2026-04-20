@@ -1,227 +1,289 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTGSL - Smart City OS v5.0 | Unified Command</title>
+    
+    <script src="https://tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com"></script>
+    <script crossorigin src="https://unpkg.com"></script>
+    <script src="https://unpkg.com"></script>
+    <link href="https://googleapis.com" rel="stylesheet">
 
-<title>UTGSL - Executive Smart City Command</title>
+    <style>
+        :root { --accent: #0071e3; --danger: #ff3b30; }
+        body { background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow: hidden; margin: 0; }
+        .glass { background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.08); }
+        .ticker { font-family: 'JetBrains Mono', monospace; }
+        
+        /* 3D Bar Animation */
+        .bar-3d { transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .bar-top { fill: rgba(255,255,255,0.15); }
+        
+        /* Red Alert Theme */
+        .emergency-mode { background: rgba(30, 0, 0, 0.6) !important; border-color: var(--danger) !important; animation: pulse-bg 2s infinite; }
+        @keyframes pulse-bg { 0%, 100% { box-shadow: inset 0 0 50px rgba(255,0,0,0.05); } 50% { box-shadow: inset 0 0 100px rgba(255,0,0,0.2); } }
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+        /* CCTV Scanning */
+        .cctv-view { position: relative; background: #050505; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+        .scanline { width: 100%; height: 2px; background: rgba(0, 113, 227, 0.2); position: absolute; animation: scan 4s linear infinite; z-index: 10; }
+        @keyframes scan { from { top: 0; } to { top: 100%; } }
 
-<style>
-body { margin:0; font-family:system-ui; background:#0b1220; }
-
-.zone {
-  cursor:pointer;
-  transition:0.4s;
-  stroke:#0f172a;
-  stroke-width:1;
-}
-
-.low { fill:#22c55e; opacity:0.7; }
-.medium { fill:#f59e0b; opacity:0.8; }
-.high { fill:#ef4444; opacity:0.9; }
-
-.zone:hover {
-  transform:scale(1.05);
-  filter:brightness(1.2);
-}
-
-.glass {
-  background:rgba(255,255,255,0.05);
-  backdrop-filter:blur(12px);
-  border:1px solid rgba(255,255,255,0.08);
-}
-
-.panel {
-  background:linear-gradient(180deg,#0b1220,#0f172a);
-  color:#e5e7eb;
-}
-</style>
+        /* Report Slide */
+        .report-modal { animation: slideUp 0.5s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .water-level { transition: height 2s ease-in-out; }
+    </style>
 </head>
-
 <body>
-<div id="root"></div>
+    <div id="root"></div>
 
-<script type="text/babel">
-const { useState, useEffect } = React;
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-// ---------------- EXEC ZONES ----------------
-const zones = [
- {name:"Luanda Centro", x:120, y:80},
- {name:"Viana", x:200, y:100},
- {name:"Cacuaco", x:60, y:120},
- {name:"Kilamba", x:180, y:180},
- {name:"Sambizanga", x:100, y:150},
-];
+        const App = () => {
+            // GLOBAL STATES
+            const [mode, setMode] = useState('normal'); // 'normal' or 'emergency'
+            const [view, setView] = useState('map'); // 'map', '3d', 'cctv'
+            const [budget, setBudget] = useState(4250900);
+            const [rain, setRain] = useState(15);
+            const [reportOpen, setReportOpen] = useState(false);
+            const [activeZone, setActiveZone] = useState("Viana");
+            
+            const zones = [
+                { name: "Viana", x: 100, y: 150, val: 78, risk: 0.8 },
+                { name: "Cazenga", x: 250, y: 120, val: 92, risk: 0.95 },
+                { name: "Cacuaco", x: 400, y: 80, val: 45, risk: 0.4 },
+                { name: "Belas", x: 180, y: 280, val: 30, risk: 0.2 },
+                { name: "Samba", x: 80, y: 220, val: 65, risk: 0.7 }
+            ];
 
-// ---------------- APP ----------------
-function App(){
+            // SIMULATION ENGINE
+            useEffect(() => {
+                const t = setInterval(() => {
+                    setBudget(prev => prev + Math.random() * 200);
+                    if(mode === 'emergency') setRain(r => Math.min(100, r + 0.3));
+                    else setRain(r => Math.max(5, r - 0.1));
+                }, 1000);
+                return () => clearInterval(t);
+            }, [mode]);
 
-const [events,setEvents] = useState([]);
-const [alerts,setAlerts] = useState([]);
-const [kpi,setKpi] = useState({
- pressure:42,
- response:6.2,
- critical:3
-});
+            const isRed = mode === 'emergency';
 
-// ---------------- SIMULATION ENGINE ----------------
-useEffect(()=>{
+            return (
+                <div className={`h-screen w-screen flex p-4 gap-4 transition-colors duration-1000 ${isRed ? 'bg-[#0a0000]' : 'bg-[#050505]'}`}>
+                    
+                    {/* LEFT PANEL: BUDGET & SARA AI */}
+                    <aside className="w-[380px] flex flex-col gap-4 z-20">
+                        <div className={`glass p-8 rounded-[35px] ${isRed ? 'emergency-mode' : ''}`}>
+                            <div className="flex items-center gap-4 mb-10">
+                                <div className="w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center font-black text-2xl">U</div>
+                                <div>
+                                    <h1 className="font-bold text-xl tracking-tighter uppercase">UTGSL OS</h1>
+                                    <p className="text-[9px] text-blue-500 font-bold tracking-[0.3em]">Command Center</p>
+                                </div>
+                            </div>
 
-const t = setInterval(()=>{
+                            <div className="space-y-6">
+                                <div>
+                                    <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Custo Operacional Live (Kz)</p>
+                                    <p className="text-3xl font-bold ticker tracking-tighter">
+                                        {budget.toLocaleString('pt-AO', { minimumFractionDigits: 2 })}
+                                    </p>
+                                </div>
 
- const zone = zones[Math.floor(Math.random()*zones.length)];
+                                <button 
+                                    onClick={() => setMode(isRed ? 'normal' : 'emergency')}
+                                    className={`w-full py-4 rounded-2xl font-bold uppercase tracking-widest transition-all ${isRed ? 'bg-red-600 animate-pulse' : 'bg-white/5 border border-white/10 hover:bg-white/10'}`}
+                                >
+                                    {isRed ? '🚨 Alerta Vermelho Ativo' : 'Ativar Protocolo Chuva'}
+                                </button>
+                            </div>
+                        </div>
 
- const severity = Math.random();
+                        <div className={`flex-1 glass rounded-[35px] p-8 flex flex-col ${isRed ? 'emergency-mode' : ''}`}>
+                            <div className="flex items-center gap-2 mb-6">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+                                <h3 className="text-[10px] font-black uppercase text-gray-500 tracking-widest">SARA Artificial Intelligence</h3>
+                            </div>
+                            
+                            <div className="space-y-6 text-sm flex-1">
+                                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 italic text-gray-400">
+                                    "Atenção: A bacia de retenção do <span className="text-white font-bold">Cazenga</span> atingiu carga crítica. Recomendo despacho imediato de 3 brigadas."
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-3 glass rounded-xl text-center">
+                                        <p className="text-[9px] text-gray-500 uppercase">Eficiência</p>
+                                        <p className="font-bold text-lg">94%</p>
+                                    </div>
+                                    <div className="p-3 glass rounded-xl text-center">
+                                        <p className="text-[9px] text-gray-500 uppercase">Ativos</p>
+                                        <p className="font-bold text-lg">128</p>
+                                    </div>
+                                </div>
+                            </div>
 
- const event = {
-  zone:zone.name,
-  severity
- };
+                            <button 
+                                onClick={() => setReportOpen(true)}
+                                className="mt-auto w-full py-3 bg-blue-600 rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-blue-500 transition-colors"
+                            >
+                                Gerar Relatório Executivo
+                            </button>
+                        </div>
+                    </aside>
 
- setEvents(prev=>[event,...prev.slice(0,20)]);
+                    {/* MAIN COMMAND AREA */}
+                    <main className="flex-1 glass rounded-[45px] relative overflow-hidden flex flex-col">
+                        
+                        {/* TOP NAVIGATION */}
+                        <div className="p-8 flex justify-between items-center bg-white/2 border-b border-white/5">
+                            <div className="flex gap-8">
+                                {['map', '3d', 'cctv'].map(t => (
+                                    <button 
+                                        key={t}
+                                        onClick={() => setView(t)}
+                                        className={`text-[10px] uppercase font-black tracking-widest transition-all ${view === t ? 'text-blue-500 border-b-2 border-blue-500 pb-1' : 'text-gray-500'}`}
+                                    >
+                                        {t === 'map' ? 'Mapa de Calor' : t === '3d' ? 'Volume 3D' : 'Vigilância Live'}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex items-center gap-6">
+                                <div className="text-right">
+                                    <p className="text-[9px] text-gray-500 uppercase font-bold tracking-widest">Pluviometria</p>
+                                    <p className={`text-xl font-bold ${rain > 60 ? 'text-red-500 animate-pulse' : 'text-white'}`}>{rain.toFixed(1)} mm/h</p>
+                                </div>
+                            </div>
+                        </div>
 
-// KPI DYNAMICS
- setKpi(prev=>({
-  pressure: Math.min(100, prev.pressure + (severity*3)),
-  response: Math.max(1, prev.response - (severity*0.1)),
-  critical: events.filter(e=>e.severity>0.7).length
- }));
+                        {/* DYNAMIC CONTENT AREA */}
+                        <div className="flex-1 relative">
+                            
+                            {/* VIEW: HEATMAP & RAIN */}
+                            {view === 'map' && (
+                                <div className="w-full h-full relative">
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
+                                        <p className="text-[180px] font-black uppercase">Luanda</p>
+                                    </div>
+                                    {/* Water Rising Effect */}
+                                    <div 
+                                        className="absolute bottom-0 left-0 w-full bg-blue-600/10 water-level border-t border-blue-500/30"
+                                        style={{ height: `${rain}%` }}
+                                    ></div>
+                                    {/* Risk Points */}
+                                    {zones.map(z => (
+                                        <div 
+                                            key={z.name} 
+                                            className="absolute cursor-pointer group" 
+                                            style={{ left: `${z.x}px`, top: `${z.y}px` }}
+                                            onClick={() => setActiveZone(z.name)}
+                                        >
+                                            <div className={`w-4 h-4 rounded-full ${isRed && z.risk > 0.7 ? 'bg-red-500 shadow-[0_0_20px_red]' : 'bg-blue-500'} relative z-10`}></div>
+                                            <div className={`absolute -inset-4 rounded-full opacity-20 ${isRed && z.risk > 0.7 ? 'bg-red-500 animate-ping' : 'bg-blue-500'}`}></div>
+                                            <span className="absolute top-6 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase whitespace-nowrap bg-black/50 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {z.name} (Risco: {z.risk * 100}%)
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
 
-// ALERT ENGINE
- if(severity > 0.75){
-  setAlerts(prev=>[
-   `⚠ Zona crítica emergente: ${zone.name}`,
-   ...prev.slice(0,5)
-  ]);
- }
+                            {/* VIEW: 3D VOLUME */}
+                            {view === '3d' && (
+                                <div className="w-full h-full flex items-center justify-center p-20">
+                                    <svg viewBox="0 0 800 400" className="w-full h-full overflow-visible">
+                                        <g transform="translate(100, 300)">
+                                            {zones.map((z, i) => {
+                                                const h = z.val * 2.5;
+                                                const x = i * 130;
+                                                return (
+                                                    <g key={i} className="bar-3d">
+                                                        <rect x={x} y={-h} width="60" height={h} fill={isRed && z.val > 70 ? '#ff3b30' : '#0071e3'} fillOpacity="0.6" stroke={isRed ? '#ff3b30' : '#0071e3'} />
+                                                        <path d={`M${x},-${h} L${x+20},-${h+20} L${x+80},-${h+20} L${x+60},-${h} Z`} fill="rgba(255,255,255,0.2)" />
+                                                        <path d={`M${x+60},-${h} L${x+80},-${h+20} L${x+80},20 L${x+60},0 Z`} fill="rgba(0,0,0,0.4)" />
+                                                        <text x={x+30} y="40" fill="gray" fontSize="10" textAnchor="middle" className="uppercase font-bold">{z.name}</text>
+                                                        <text x={x+30} y={-h-20} fill="white" fontSize="16" fontWeight="bold" textAnchor="middle">{z.val}%</text>
+                                                    </g>
+                                                );
+                                            })}
+                                        </g>
+                                    </svg>
+                                </div>
+                            )}
 
-},3500);
+                            {/* VIEW: CCTV */}
+                            {view === 'cctv' && (
+                                <div className="w-full h-full p-12 flex flex-wrap gap-6 justify-center overflow-y-auto">
+                                    {zones.map(z => (
+                                        <div key={z.name} className="w-[300px] h-[200px] cctv-view">
+                                            <div className="scanline"></div>
+                                            <div className="absolute top-4 left-4 text-[10px] font-mono z-20 text-white/70">
+                                                CAM_ID: {z.name.toUpperCase()}_01 <br/> {new Date().toLocaleTimeString()}
+                                            </div>
+                                            <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                                                <div className="text-center opacity-30">
+                                                    <div className="w-12 h-12 border-2 border-white rounded-full animate-pulse mx-auto"></div>
+                                                    <p className="text-[10px] mt-2 font-mono uppercase tracking-widest text-white">Live Stream</p>
+                                                </div>
+                                            </div>
+                                            {isRed && z.risk > 0.7 && (
+                                                <div className="absolute top-4 right-4 bg-red-600 px-2 py-1 text-[8px] font-bold animate-pulse">ALERTA INUNDAÇÃO</div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
 
-return ()=>clearInterval(t);
+                        </div>
+                        
+                        {/* REPORT MODAL */}
+                        {reportOpen && (
+                            <div className="absolute inset-0 bg-black/95 z-[100] flex items-center justify-center p-12">
+                                <div className="bg-white text-black w-full max-w-2xl rounded-3xl p-12 report-modal shadow-2xl flex flex-col">
+                                    <div className="flex justify-between items-start border-b-2 border-black pb-6 mb-8">
+                                        <div>
+                                            <h2 className="font-black text-2xl uppercase tracking-tighter">Relatório de Operação Estratégica</h2>
+                                            <p className="text-xs text-gray-500 font-mono italic">Documento Interno - Confidencial UTGSL</p>
+                                        </div>
+                                        <button onClick={() => setReportOpen(false)} className="text-2xl hover:scale-110 transition-transform">✕</button>
+                                    </div>
+                                    
+                                    <div className="flex-1 space-y-6 overflow-y-auto">
+                                        <section>
+                                            <h4 className="font-black text-[10px] uppercase text-blue-600 mb-2">1. Sumário Executivo</h4>
+                                            <p className="text-sm leading-relaxed font-serif text-gray-800">
+                                                Este relatório foi gerado automaticamente pela Inteligência Artificial SARA com base no monitoramento de {new Date().toLocaleDateString()}. 
+                                                Detectou-se uma anomalia pluviométrica de {rain.toFixed(1)}mm/h, impactando diretamente o orçamento operacional em {budget.toLocaleString()} KZ.
+                                            </p>
+                                        </section>
+                                        
+                                        <div className="grid grid-cols-3 gap-4 border-y py-6 border-gray-100">
+                                            <div className="text-center">
+                                                <p className="text-[9px] uppercase text-gray-400">Eficiência de Recolha</p>
+                                                <p className="text-xl font-bold">94.2%</p>
+                                            </div>
+                                            <div className="text-center border-x">
+                                                <p className="text-[9px] uppercase text-gray-400">Brigadas de Emergência</p>
+                                                <p className="text-xl font-bold">14 Ativas</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="text-[9px] uppercase text-gray-400">Zonas em Risco</p>
+                                                <p className="text-xl font-bold text-red-600">03 Críticas</p>
+                                            </div>
+                                        </div>
 
-},[events]);
+                                        <section>
+                                            <h4 className="font-black text-[10px] uppercase text-blue-600 mb-2">2. Análise de Custo/Benefício</h4>
+                                            <p className="text-xs text-gray-600 leading-relaxed italic">
+                                                *O aumento de custos em Viana e Cazenga reflete o despacho preventivo de camiões hidrovácuo, reduzindo o risco de danos estruturais em 40%.
+                                            </p>
+                                        </section>
+                                    </div>
 
-// ---------------- ZONE STATUS ----------------
-const getZoneLevel = (name)=>{
- const count = events.filter(e=>e.zone===name).length;
-
- if(count > 5) return "high";
- if(count > 2) return "medium";
- return "low";
-};
-
-// ---------------- ACTION ----------------
-const trigger = (name)=>{
- setEvents(prev=>[
-  {zone:name, severity:1},
-  ...prev
- ]);
-};
-
-// ---------------- UI ----------------
-return(
-<div className="h-screen flex">
-
-{/* MAPA EXECUTIVO */}
-<div className="w-1/2 bg-slate-950 p-4">
-
-<h1 className="text-white font-bold text-lg mb-2">
-Smart City Command - Luanda
-</h1>
-
-<svg viewBox="0 0 300 300" className="w-full h-full">
-
-{zones.map((z,i)=>(
-<circle
- key={i}
- cx={z.x}
- cy={z.y}
- r="28"
- className={`zone ${getZoneLevel(z.name)}`}
- onClick={()=>trigger(z.name)}
-/>
-))}
-
-</svg>
-
-<p className="text-xs text-gray-400">
-Executive Monitoring Layer
-</p>
-
-</div>
-
-{/* COMMAND PANEL */}
-<div className="w-1/2 panel flex flex-col">
-
-{/* KPI HEADER */}
-<div className="p-4 border-b border-white/10">
-
-<h2 className="font-bold text-white">Centro Executivo</h2>
-
-<div className="grid grid-cols-3 gap-3 mt-3 text-xs">
-
-<div className="glass p-2 rounded">
-<p>Pressão Urbana</p>
-<p className="text-lg">{kpi.pressure.toFixed(0)}</p>
-</div>
-
-<div className="glass p-2 rounded">
-<p>Tempo Resposta</p>
-<p className="text-lg">{kpi.response.toFixed(1)}h</p>
-</div>
-
-<div className="glass p-2 rounded">
-<p>Crítico</p>
-<p className="text-lg">{kpi.critical}</p>
-</div>
-
-</div>
-
-</div>
-
-{/* ALERT STREAM */}
-<div className="flex-1 overflow-y-auto p-4 space-y-2">
-
-{alerts.length===0 && (
-<p className="text-gray-500 text-sm">
-Sistema operacional. Sem alertas críticos.
-</p>
-)}
-
-{alerts.map((a,i)=>(
-<div key={i} className="glass p-2 text-sm">
-{a}
-</div>
-))}
-
-</div>
-
-{/* EVENT LOG */}
-<div className="p-4 border-t border-white/10 text-xs text-gray-400">
-
-<h3 className="text-white mb-2">Log Operacional</h3>
-
-{events.slice(0,6).map((e,i)=>(
-<div key={i}>
-{e.zone} - intensidade {e.severity.toFixed(2)}
-</div>
-))}
-
-</div>
-
-</div>
-
-</div>
-);
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-</script>
-
-</body>
-</html>
+                                    <div className="mt-10 flex justify-between items-end border-t pt-8">
+                                        <div className="text-[9px] text-gray-400 font-mono">HASH_AUTH: 88AF-92XC-2024-UTGSL</div>
+                                        <div className="flex gap-3">
+                                            <button className="px-6 py-2 border border-black rounded-full text-[10px] font-bold uppercase hover:bg-black hover:text-white transition-all">Imprimir PDF</button>
+                                            <button className="px-6 py-2 bg-blue-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-blue-700 shadow
