@@ -1,190 +1,538 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UTGSL - Plataforma Inteligente de Saneamento</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTGSL - Plataforma de Saneamento Urbano</title>
+    <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0B6E4F;
+            --primary-light: #1e60af;
+            --primary-dark: #60a5fa;
+            --bg-light: #ffffff;
+            --bg-dark: #0f172a;
+            --text-light: #1e293b;
+            --text-dark: #e2e8f0;
+            --border-light: #e2e8f0;
+            --border-dark: #1e293b;
+        }
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<style>
-body { margin:0; }
-.chat-scroll::-webkit-scrollbar { width: 6px; }
-.chat-scroll::-webkit-scrollbar-thumb { background:#ccc; border-radius:10px; }
-</style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body.dark-mode {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* HEADER */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            width: 100%;
+            border-bottom: 1px solid var(--border-light);
+            background-color: var(--bg-light);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode header {
+            border-bottom-color: var(--border-dark);
+            background-color: var(--bg-dark);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            height: 4rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .header-brand h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-light);
+        }
+
+        body.dark-mode .header-brand h1 {
+            color: var(--primary-dark);
+        }
+
+        .header-brand p {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        body.dark-mode .header-brand p {
+            color: #94a3b8;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            border-radius: 9999px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            width: 2.5rem;
+            height: 2.5rem;
+        }
+
+        .btn-icon:hover {
+            background-color: #f1f5f9;
+        }
+
+        body.dark-mode .btn-icon:hover {
+            background-color: #1e293b;
+        }
+
+        .btn-icon svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            color: #334155;
+        }
+
+        body.dark-mode .btn-icon svg {
+            color: #cbd5e1;
+        }
+
+        .language-wrapper {
+            position: relative;
+        }
+
+        .language-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            width: 10rem;
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-light);
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        body.dark-mode .language-menu {
+            background-color: var(--bg-dark);
+            border-color: var(--border-dark);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        .language-menu.active {
+            display: block;
+        }
+
+        .language-menu button {
+            width: 100%;
+            text-align: left;
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #334155;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .language-menu button:last-child {
+            border-bottom: none;
+        }
+
+        body.dark-mode .language-menu button {
+            color: #cbd5e1;
+            border-bottom-color: var(--border-dark);
+        }
+
+        .language-menu button:hover {
+            background-color: #f1f5f9;
+        }
+
+        body.dark-mode .language-menu button:hover {
+            background-color: #1e293b;
+        }
+
+        .language-menu button.active {
+            background-color: #eff6ff;
+            color: var(--primary-light);
+            font-weight: 600;
+        }
+
+        body.dark-mode .language-menu button.active {
+            background-color: #1e3a8a;
+            color: var(--primary-dark);
+        }
+
+        /* MAIN */
+        main {
+            flex: 1;
+            width: 100%;
+            padding: 3rem 1rem;
+        }
+
+        .main-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .content-box {
+            max-width: 42rem;
+            margin: 0 auto;
+        }
+
+        .content-box h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--primary-light);
+            margin-bottom: 1rem;
+        }
+
+        body.dark-mode .content-box h1 {
+            color: var(--primary-dark);
+        }
+
+        .content-box > p {
+            font-size: 1.125rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        body.dark-mode .content-box > p {
+            color: #94a3b8;
+        }
+
+        .card {
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-light);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .card {
+            background-color: var(--bg-dark);
+            border-color: var(--border-dark);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .card p {
+            color: var(--text-light);
+            line-height: 1.625;
+            font-size: 1rem;
+        }
+
+        body.dark-mode .card p {
+            color: var(--text-dark);
+        }
+
+        /* FOOTER */
+        footer {
+            width: 100%;
+            border-top: 1px solid var(--border-light);
+            background-color: #f8fafc;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode footer {
+            border-top-color: var(--border-dark);
+            background-color: var(--bg-dark);
+        }
+
+        .footer-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        body.dark-mode .footer-container {
+            color: #94a3b8;
+        }
+
+        .footer-container p:last-child {
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        body.dark-mode .footer-container p:last-child {
+            color: var(--text-dark);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 640px) {
+            .header-container {
+                padding: 0 0.75rem;
+            }
+
+            main {
+                padding: 1.5rem 1rem;
+            }
+
+            .content-box h1 {
+                font-size: 1.875rem;
+            }
+
+            .content-box > p {
+                font-size: 1rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
 </head>
-
 <body>
-<div id="root"></div>
+    <div id="app">
+        <header>
+            <div class="header-container">
+                <div class="header-brand">
+                    <h1 id="header-title">UTGSL</h1>
+                    <p id="header-subtitle">Unidade de Gestão de Saneamento Urbano de Luanda</p>
+                </div>
 
-<script type="text/babel">
-const { useState, useEffect } = React;
+                <div class="header-controls">
+                    <!-- Theme Toggle -->
+                    <button class="btn-icon" id="theme-toggle" aria-label="Toggle theme">
+                        <svg id="theme-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                        </svg>
+                    </button>
 
-const bairros = ["Maianga","Viana","Kilamba","Cacuaco","Sambizanga"];
+                    <!-- Language Selector -->
+                    <div class="language-wrapper">
+                        <button class="btn-icon" id="language-toggle" aria-label="Select language">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.3A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z" clipRule="evenodd"></path>
+                            </svg>
+                        </button>
 
-function App(){
+                        <div class="language-menu" id="language-menu">
+                            <button data-lang="pt" class="active">Português</button>
+                            <button data-lang="en">English</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-const [messages, setMessages] = useState([
-  {from:"bot", text:"Sistema UTGSL activo. Como posso ajudar?"}
-]);
+        <main>
+            <div class="main-container">
+                <div class="content-box">
+                    <h1 id="main-title">UTGSL</h1>
+                    <p id="main-subtitle">Unidade de Gestão de Saneamento Urbano de Luanda</p>
+                    <div class="card">
+                        <p id="main-description">Plataforma de Comando de Saneamento Inteligente para a Unidade de Gestão de Saneamento Urbano de Luanda.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
 
-const [input, setInput] = useState("");
-const [mode, setMode] = useState("menu");
-const [dashboard, setDashboard] = useState(false);
+        <footer>
+            <div class="footer-container">
+                <p id="footer-copyright">© 2026 UTGSL. Todos os direitos reservados.</p>
+                <p id="footer-powered">Powered by Magestade Pura Digital</p>
+            </div>
+        </footer>
+    </div>
 
-const addMessage = (msg)=> setMessages(prev=>[...prev,msg]);
+    <script>
+        // ============ TRANSLATIONS ============
+        const translations = {
+            pt: {
+                header: {
+                    title: 'UTGSL',
+                    subtitle: 'Unidade de Gestão de Saneamento Urbano de Luanda',
+                },
+                main: {
+                    title: 'UTGSL',
+                    subtitle: 'Unidade de Gestão de Saneamento Urbano de Luanda',
+                    description: 'Plataforma de Comando de Saneamento Inteligente para a Unidade de Gestão de Saneamento Urbano de Luanda.',
+                },
+                footer: {
+                    copyright: '© 2026 UTGSL. Todos os direitos reservados.',
+                    powered: 'Powered by Magestade Pura Digital',
+                },
+                language: {
+                    pt: 'Português',
+                    en: 'English',
+                },
+            },
+            en: {
+                header: {
+                    title: 'UTGSL',
+                    subtitle: 'Urban Sanitation Management Unit of Luanda',
+                },
+                main: {
+                    title: 'UTGSL',
+                    subtitle: 'Urban Sanitation Management Unit of Luanda',
+                    description: 'Smart Sanitation Command Platform for the Urban Sanitation Management Unit of Luanda.',
+                },
+                footer: {
+                    copyright: '© 2026 UTGSL. All rights reserved.',
+                    powered: 'Powered by Magestade Pura Digital',
+                },
+                language: {
+                    pt: 'Português',
+                    en: 'English',
+                },
+            },
+        };
 
-// ---------------- CHAT LOGIC ----------------
-const handleSend = ()=>{
- if(!input) return;
+        // ============ STATE MANAGEMENT ============
+        let currentLanguage = localStorage.getItem('utgsl-language') || 'pt';
+        let currentTheme = localStorage.getItem('utgsl-theme') || 'light';
 
- addMessage({from:"user", text:input});
+        // ============ INITIALIZATION ============
+        function initializeApp() {
+            applyTheme(currentTheme);
+            updateLanguage(currentLanguage);
+            attachEventListeners();
+        }
 
- setTimeout(()=>{
-   addMessage({from:"bot", text:generateResponse(input)});
- },800);
+        // ============ THEME MANAGEMENT ============
+        function applyTheme(theme) {
+            currentTheme = theme;
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            localStorage.setItem('utgsl-theme', theme);
+            updateThemeIcon();
+        }
 
- setInput("");
-};
+        function toggleTheme() {
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(newTheme);
+        }
 
-const generateResponse = (text)=>{
- text = text.toLowerCase();
+        function updateThemeIcon() {
+            const icon = document.getElementById('theme-icon');
+            if (currentTheme === 'dark') {
+                icon.innerHTML = '<path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.536l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.828-2.828a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414l.707.707zm.707 5.657a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 1.414l-.707.707zM9 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-4.536-.464a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zm2.828-2.828a1 1 0 001.414-1.414L5.586 9.172a1 1 0 00-1.414 1.414l.707.707zM5 5a1 1 0 011.414-1.414L7.121 4.05a1 1 0 01-1.414 1.414L5 5z" clipRule="evenodd"></path>';
+            } else {
+                icon.innerHTML = '<path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>';
+            }
+        }
 
- if(text.includes("lixo")) return "Indique o bairro para registar ocorrência.";
- if(text.includes("inund")) return "Situação de drenagem detectada. Indique localização.";
- if(text.includes("estado")) return "Zona em nível moderado. Última recolha há 48h.";
- if(text.includes("operador")) return "A transferir para operador...";
- return "Não compreendido. Use o menu.";
-};
+        // ============ LANGUAGE MANAGEMENT ============
+        function updateLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('utgsl-language', lang);
 
-// ---------------- INCIDENT ----------------
-const createIncident = ()=>{
- const bairro = bairros[Math.floor(Math.random()*bairros.length)];
- const code = "LU-"+Math.floor(Math.random()*100000);
+            const t = translations[lang];
 
- addMessage({
-   from:"bot",
-   text:`Ocorrência registada em ${bairro}. Protocolo: ${code}`
- });
+            // Update header
+            document.getElementById('header-title').textContent = t.header.title;
+            document.getElementById('header-subtitle').textContent = t.header.subtitle;
 
- setTimeout(()=>{
-   addMessage({from:"bot", text:"Equipa enviada para o local."});
- },2000);
-};
+            // Update main
+            document.getElementById('main-title').textContent = t.main.title;
+            document.getElementById('main-subtitle').textContent = t.main.subtitle;
+            document.getElementById('main-description').textContent = t.main.description;
 
-// ---------------- DASHBOARD DATA ----------------
-const stats = {
- total: Math.floor(Math.random()*5000),
- active: Math.floor(Math.random()*200),
- critical: Math.floor(Math.random()*50)
-};
+            // Update footer
+            document.getElementById('footer-copyright').textContent = t.footer.copyright;
+            document.getElementById('footer-powered').textContent = t.footer.powered;
 
-// ---------------- UI ----------------
-return(
-<div className="h-screen flex flex-col bg-gray-100">
+            // Update language menu buttons
+            const langButtons = document.querySelectorAll('.language-menu button');
+            langButtons.forEach(btn => {
+                if (btn.dataset.lang === lang) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
 
-{/* HEADER */}
-<header className="bg-white shadow px-4 py-3 flex justify-between">
- <div>
-   <h1 className="font-bold text-lg text-green-700">UTGSL</h1>
-   <p className="text-xs text-gray-500">Plataforma de Saneamento</p>
- </div>
+            // Close language menu
+            document.getElementById('language-menu').classList.remove('active');
+        }
 
- <div className="flex gap-2">
-   <button onClick={()=>setDashboard(!dashboard)}
-     className="px-3 py-1 border rounded text-sm">
-     Dashboard
-   </button>
- </div>
-</header>
+        // ============ EVENT LISTENERS ============
+        function attachEventListeners() {
+            // Theme toggle
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
-{/* DASHBOARD */}
-{dashboard && (
-<div className="p-4 bg-white shadow grid grid-cols-3 gap-4 text-center">
- <div>
-   <h2 className="text-xl font-bold">{stats.total}</h2>
-   <p>Total Ocorrências</p>
- </div>
- <div>
-   <h2 className="text-xl font-bold">{stats.active}</h2>
-   <p>Em curso</p>
- </div>
- <div>
-   <h2 className="text-xl font-bold text-red-600">{stats.critical}</h2>
-   <p>Zonas críticas</p>
- </div>
-</div>
-)}
+            // Language toggle
+            document.getElementById('language-toggle').addEventListener('click', function() {
+                const menu = document.getElementById('language-menu');
+                menu.classList.toggle('active');
+            });
 
-{/* CHAT */}
-<div className="flex-1 overflow-y-auto p-4 chat-scroll">
+            // Language menu buttons
+            document.querySelectorAll('.language-menu button').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    updateLanguage(this.dataset.lang);
+                });
+            });
 
-{messages.map((m,i)=>(
-<div key={i} className={`mb-3 flex ${m.from==="user"?"justify-end":"justify-start"}`}>
- <div className={`px-4 py-2 rounded-lg max-w-xs ${
-   m.from==="user"?"bg-green-600 text-white":"bg-white shadow"
- }`}>
-   {m.text}
- </div>
-</div>
-))}
+            // Close language menu when clicking outside
+            document.addEventListener('click', function(event) {
+                const wrapper = document.querySelector('.language-wrapper');
+                if (!wrapper.contains(event.target)) {
+                    document.getElementById('language-menu').classList.remove('active');
+                }
+            });
+        }
 
-</div>
-
-{/* MENU */}
-<div className="p-3 bg-white border-t flex gap-2 flex-wrap">
-
-<button onClick={()=>addMessage({from:"bot", text:"Descreva o problema de lixo."})}
- className="px-3 py-2 border rounded text-sm">
- Lixo
-</button>
-
-<button onClick={()=>addMessage({from:"bot", text:"Descreva problema de drenagem."})}
- className="px-3 py-2 border rounded text-sm">
- Drenagem
-</button>
-
-<button onClick={createIncident}
- className="px-3 py-2 border rounded text-sm bg-green-600 text-white">
- Criar Ocorrência
-</button>
-
-<button onClick={()=>addMessage({from:"bot", text:"Estado do bairro: moderado."})}
- className="px-3 py-2 border rounded text-sm">
- Estado
-</button>
-
-<button onClick={()=>addMessage({from:"bot", text:"Ligando operador..."})}
- className="px-3 py-2 border rounded text-sm">
- Operador
-</button>
-
-</div>
-
-{/* INPUT */}
-<div className="p-3 bg-white border-t flex">
-<input 
- value={input}
- onChange={(e)=>setInput(e.target.value)}
- className="flex-1 border rounded px-3 py-2"
- placeholder="Digite aqui..."
-/>
-
-<button onClick={handleSend}
- className="ml-2 px-4 bg-green-600 text-white rounded">
- Enviar
-</button>
-</div>
-
-</div>
-);
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-</script>
-
+        // ============ START APP ============
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
 </body>
 </html>
