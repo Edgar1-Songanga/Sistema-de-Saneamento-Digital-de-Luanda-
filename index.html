@@ -4,10 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>UTGSL | Plataforma de Comando de Saneamento Urbano</title>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com"></script>
+<script src="https://unpkg.com"></script>
+<script src="https://unpkg.com"></script>
+<script src="https://tailwindcss.com"></script>
 <script>
 tailwind.config = {
   theme: {
@@ -40,7 +40,7 @@ tailwind.config = {
   }
 }
 </script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://googleapis.com" rel="stylesheet">
 <style>
 body { font-family: 'Inter', sans-serif; background: #F5F7F6; }
 .glass-effect {
@@ -51,17 +51,16 @@ body { font-family: 'Inter', sans-serif; background: #F5F7F6; }
 .scroll-smooth { scroll-behavior: smooth; }
 .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity:.5; } }
-.grid-dashboard { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 </style>
 </head>
 <body>
 <div id="root"></div>
 
 <script type="text/babel">
-const { useState, useEffect, useRef, useCallback, useMemo } = React;
+const { useState, useEffect } = React;
 
 const SimulationEngine = {
-  municipios: ['Luanda', 'Belas', 'Cacuaco', 'Cazenga', 'Icolo e Bengo', 'Quilamba Quiaxi', 'Quiçama', 'Talatona', 'Viana'],
+  municipios: ['Luanda', 'Belas', 'Cacuaco', 'Cazenga', 'Viana', 'Talatona'],
   bairros: {
     'Luanda': ['Ingombota', 'Maianga', 'Rangel', 'Samba', 'Sambizanga'],
     'Belas': ['Barra do Kwanza', 'Benfica', 'Futungo', 'Quenguela'],
@@ -77,47 +76,19 @@ const SimulationEngine = {
     { id: 'illegal', label: 'Descarte irregular', risk: 'high' }
   ],
   imageLibrary: {
-    waste: [
-      'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=800&q=80',
-      'https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?w=800&q=80'
-    ],
-    drainage: [
-      'https://images.unsplash.com/photo-1433086966358-548da38d089b?w=800&q=80',
-      'https://images.unsplash.com/photo-1505144808419-1957a94ca668?w=800&q=80'
-    ],
-    flood: [
-      'https://images.unsplash.com/photo-1547683905-f686c9fa5188?w=800&q=80',
-      'https://images.unsplash.com/photo-1601055903647-b2b88a1f6c2e?w=800&q=80'
-    ],
-    illegal: [
-      'https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=800&q=80',
-      'https://images.unsplash.com/photo-1621451537084-13996a4e2996?w=800&q=80'
-    ]
+    waste: ['https://unsplash.com'],
+    drainage: ['https://unsplash.com'],
+    flood: ['https://unsplash.com'],
+    illegal: ['https://unsplash.com']
   },
-  generateTicketId: () => {
-    const year = new Date().getFullYear();
-    const num = String(Math.floor(Math.random() * 90000) + 10000);
-    return `LU-UTGSL-${year}-${num}`;
-  },
+  generateTicketId: () => `LU-UTGSL-${new Date().getFullYear()}-${Math.floor(Math.random() * 90000) + 10000}`,
   getBairroStatus: (bairro) => {
-    const seed = bairro.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-    const statuses = ['Controlled', 'Attention Required', 'Critical'];
-    const status = statuses[seed % 3];
-    const hoursAgo = (seed % 24) + 1;
+    const seed = bairro.length;
     return {
-      status,
-      lastCollection: `${hoursAgo}h atrás`,
-      activeAlerts: status === 'Critical'? Math.floor(seed % 3) + 1 : status === 'Attention Required'? 1 : 0
+      status: seed % 3 === 0 ? 'Critical' : seed % 2 === 0 ? 'Attention Required' : 'Controlled',
+      lastCollection: `${seed % 12 + 1}h atrás`,
+      activeAlerts: seed % 3
     };
-  },
-  generatePredictiveAlert: (municipio, tipo) => {
-    const alerts = {
-      flood: `Risco elevado de alagamento detectado em ${municipio}. Precipitação acumulada excede parâmetros operacionais.`,
-      drainage: `Padrão irregular de obstrução de drenagem identificado em ${municipio}. Inspeção preventiva recomendada.`,
-      waste: `Taxa de acumulação de resíduos acima da média em ${municipio}. Reforço de coleta sugerido.`,
-      illegal: `Atividade de descarte irregular recorrente detectada em ${municipio}. Monitoramento ampliado ativado.`
-    };
-    return alerts[tipo] || `Anomalia operacional detectada em ${municipio}. Verificação em curso.`;
   }
 };
 
@@ -126,439 +97,130 @@ const StatusCards = ({ municipio, bairro }) => {
   useEffect(() => {
     if (bairro) setStatus(SimulationEngine.getBairroStatus(bairro));
   }, [bairro]);
+
   if (!status) return null;
-  const statusConfig = {
+  const config = {
     'Controlled': { color: 'bg-utgsl-primary', text: 'Controlado' },
-    'Attention Required': { color: 'bg-amber-500', text: 'Atenção Requerida' },
+    'Attention Required': { color: 'bg-amber-500', text: 'Atenção' },
     'Critical': { color: 'bg-red-600', text: 'Crítico' }
   };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <div className="glass-effect rounded-lg p-5 shadow-glass border border-utgsl-gray-200">
-        <div className="text-xs font-medium text-utgsl-gray-500 uppercase tracking-wide mb-2">Nível de Limpeza</div>
+        <div className="text-xs font-medium text-utgsl-gray-500 uppercase mb-2">Nível de Limpeza</div>
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${statusConfig[status.status].color} ${status.status!== 'Controlled'? 'status-pulse' : ''}`}></div>
-          <div className="text-lg font-semibold text-utgsl-gray-900">{statusConfig[status.status].text}</div>
+          <div className={`w-3 h-3 rounded-full ${config[status.status].color}`}></div>
+          <span className="font-bold text-utgsl-gray-900">{config[status.status].text}</span>
         </div>
       </div>
       <div className="glass-effect rounded-lg p-5 shadow-glass border border-utgsl-gray-200">
-        <div className="text-xs font-medium text-utgsl-gray-500 uppercase tracking-wide mb-2">Última Coleta</div>
-        <div className="text-lg font-semibold text-utgsl-gray-900">{status.lastCollection}</div>
+        <div className="text-xs font-medium text-utgsl-gray-500 uppercase mb-2">Última Coleta</div>
+        <div className="font-bold text-utgsl-gray-900">{status.lastCollection}</div>
       </div>
       <div className="glass-effect rounded-lg p-5 shadow-glass border border-utgsl-gray-200">
-        <div className="text-xs font-medium text-utgsl-gray-500 uppercase tracking-wide mb-2">Alertas Ativos</div>
-        <div className="text-lg font-semibold text-utgsl-gray-900">{status.activeAlerts}</div>
+        <div className="text-xs font-medium text-utgsl-gray-500 uppercase mb-2">Alertas</div>
+        <div className="font-bold text-utgsl-gray-900">{status.activeAlerts} ativos</div>
       </div>
     </div>
   );
 };
 
-const ImageRenderer = ({ type, onSelect }) => {
-  const images = SimulationEngine.imageLibrary[type] || [];
-  const [selected, setSelected] = useState(0);
-  useEffect(() => {
-    if (images.length > 0) onSelect(images[selected]);
-  }, [selected, type]);
-  if (!images.length) return null;
-  return (
-    <div className="space-y-3">
-      <div className="text-xs font-medium text-utgsl-gray-700 uppercase tracking-wide">Evidência Visual</div>
-      <div className="relative rounded-lg overflow-hidden border border-utgsl-gray-200 bg-utgsl-gray-100">
-        <img src={images[selected]} alt="Evidência" className="w-full h-64 object-cover" />
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-          <div className="text-xs text-white font-medium">Imagem verificada | Georreferenciada</div>
-        </div>
-      </div>
-      <div className="flex gap-2">
-        {images.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setSelected(idx)}
-            className={`h-1.5 flex-1 rounded-full transition-all ${selected === idx? 'bg-utgsl-primary' : 'bg-utgsl-gray-300'}`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
+const Dashboard = () => {
+  const [form, setForm] = useState({ municipio: '', bairro: '', tipo: '' });
+  const [ticket, setTicket] = useState(null);
 
-const IncidentFlow = ({ onComplete }) => {
-  const [step, setStep] = useState(1);
-  const [data, setData] = useState({ municipio: '', bairro: '', tipo: '', imagem: '', descricao: '' });
-  const [processing, setProcessing] = useState(false);
-  const handleSubmit = async () => {
-    setProcessing(true);
-    await new Promise(r => setTimeout(r, 1800));
-    const ticket = SimulationEngine.generateTicketId();
-    const alert = SimulationEngine.generatePredictiveAlert(data.municipio, data.tipo);
-    onComplete({...data, ticket, alert, timestamp: new Date() });
-    setProcessing(false);
-    setStep(1);
-    setData({ municipio: '', bairro: '', tipo: '', imagem: '', descricao: '' });
+  const handleSubmit = () => {
+    if (!form.municipio || !form.bairro || !form.tipo) return alert("Preencha todos os campos");
+    setTicket(SimulationEngine.generateTicketId());
   };
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 pb-4 border-b border-utgsl-gray-200">
-        {[1, 2, 3, 4].map(s => (
-          <div key={s} className={`flex items-center ${s < 4? 'flex-1' : ''}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${step >= s? 'bg-utgsl-primary text-white' : 'bg-utgsl-gray-200 text-utgsl-gray-500'}`}>
-              {s}
-            </div>
-            {s < 4 && <div className={`flex-1 h-0.5 mx-2 ${step > s? 'bg-utgsl-primary' : 'bg-utgsl-gray-200'}`}></div>}
-          </div>
-        ))}
-      </div>
-      {step === 1 && (
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-utgsl-gray-700 mb-2">Município</label>
-            <select
-              value={data.municipio}
-              onChange={e => setData({...data, municipio: e.target.value, bairro: ''})}
-              className="w-full px-4 py-3 rounded-lg border border-utgsl-gray-300 focus:border-utgsl-primary focus:ring-2 focus:ring-utgsl-primary/20 outline-none transition-all bg-white"
-            >
-              <option value="">Selecionar município</option>
-              {SimulationEngine.municipios.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
-          </div>
-          {data.municipio && (
-            <div>
-              <label className="block text-sm font-medium text-utgsl-gray-700 mb-2">Bairro</label>
-              <select
-                value={data.bairro}
-                onChange={e => setData({...data, bairro: e.target.value})}
-                className="w-full px-4 py-3 rounded-lg border border-utgsl-gray-300 focus:border-utgsl-primary focus:ring-2 focus:ring-utgsl-primary/20 outline-none transition-all bg-white"
-              >
-                <option value="">Selecionar bairro</option>
-                {(SimulationEngine.bairros[data.municipio] || []).map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-          )}
-          {data.bairro && (
-            <button onClick={() => setStep(2)} className="w-full bg-utgsl-primary hover:bg-utgsl-primaryDark text-white font-semibold py-3 rounded-lg transition-all">
-              Continuar
-            </button>
-          )}
-        </div>
-      )}
-      {step === 2 && (
-        <div className="space-y-4">
-          <label className="block text-sm font-medium text-utgsl-gray-700 mb-2">Tipo de Ocorrência</label>
-          <div className="space-y-2">
-            {SimulationEngine.incidentTypes.map(tipo => (
-              <button
-                key={tipo.id}
-                onClick={() => setData({...data, tipo: tipo.id})}
-                className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${data.tipo === tipo.id? 'border-utgsl-primary bg-utgsl-primary/5' : 'border-utgsl-gray-200 hover:border-utgsl-gray-300'}`}
-              >
-                <div className="font-medium text-utgsl-gray-900">{tipo.label}</div>
-                <div className="text-xs text-utgsl-gray-500 mt-1">Nível de risco: {tipo.risk}</div>
-              </button>
-            ))}
-          </div>
-          {data.tipo && (
-            <button onClick={() => setStep(3)} className="w-full bg-utgsl-primary hover:bg-utgsl-primaryDark text-white font-semibold py-3 rounded-lg transition-all">
-              Continuar
-            </button>
-          )}
-        </div>
-      )}
-      {step === 3 && (
-        <div className="space-y-4">
-          <ImageRenderer type={data.tipo} onSelect={img => setData({...data, imagem: img})} />
-          <div>
-            <label className="block text-sm font-medium text-utgsl-gray-700 mb-2">Descrição Adicional | Opcional</label>
-            <textarea
-              value={data.descricao}
-              onChange={e => setData({...data, descricao: e.target.value})}
-              rows="3"
-              className="w-full px-4 py-3 rounded-lg border border-utgsl-gray-300 focus:border-utgsl-primary focus:ring-2 focus:ring-utgsl-primary/20 outline-none transition-all resize-none"
-              placeholder="Detalhes relevantes para a equipe operacional"
-            />
-          </div>
-          <button onClick={() => setStep(4)} className="w-full bg-utgsl-primary hover:bg-utgsl-primaryDark text-white font-semibold py-3 rounded-lg transition-all">
-            Revisar Submissão
-          </button>
-        </div>
-      )}
-      {step === 4 && (
-        <div className="space-y-4">
-          <div className="glass-effect rounded-lg p-5 border border-utgsl-gray-200 space-y-3">
-            <div className="text-xs font-semibold text-utgsl-gray-500 uppercase tracking-wide">Resumo da Ocorrência</div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><span className="text-utgsl-gray-500">Município:</span> <span className="font-medium text-utgsl-gray-900">{data.municipio}</span></div>
-              <div><span className="text-utgsl-gray-500">Bairro:</span> <span className="font-medium text-utgsl-gray-900">{data.bairro}</span></div>
-              <div className="col-span-2"><span className="text-utgsl-gray-500">Tipo:</span> <span className="font-medium text-utgsl-gray-900">{SimulationEngine.incidentTypes.find(t => t.id === data.tipo)?.label}</span></div>
-            </div>
-            {data.imagem && <img src={data.imagem} className="w-full h-32 object-cover rounded" />}
-          </div>
-          <button
-            onClick={handleSubmit}
-            disabled={processing}
-            className="w-full bg-utgsl-primary hover:bg-utgsl-primaryDark disabled:bg-utgsl-gray-300 text-white font-semibold py-3 rounded-lg transition-all"
-          >
-            {processing? 'Processando...' : 'Confirmar Registro'}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
 
-const OperationalResponse = ({ ticket, municipio }) => {
-  const [stage, setStage] = useState(0);
-  const stages = ['Registrado', 'Sob análise', 'Equipe despachada', 'Resolvido'];
-  const times = ['Agora', '+15 min', '+45 min', '+2h 30min'];
-  useEffect(() => {
-    const intervals = [2000, 5000, 8000];
-    intervals.forEach((delay, idx) => {
-      setTimeout(() => setStage(idx + 1), delay);
-    });
-  }, []);
   return (
-    <div className="glass-effect rounded-lg p-6 border border-utgsl-gray-200">
-      <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen p-4 md:p-8">
+      <header className="max-w-5xl mx-auto mb-8 flex justify-between items-center">
         <div>
-          <div className="text-xs font-semibold text-utgsl-gray-500 uppercase tracking-wide mb-1">Protocolo</div>
-          <div className="text-lg font-bold text-utgsl-gray-900">{ticket}</div>
+          <h1 className="text-2xl font-bold text-utgsl-primary">UTGSL</h1>
+          <p className="text-utgsl-gray-500 text-sm">Plataforma de Comando de Saneamento</p>
         </div>
         <div className="text-right">
-          <div className="text-xs font-semibold text-utgsl-gray-500 uppercase tracking-wide mb-1">Zona</div>
-          <div className="text-sm font-medium text-utgsl-gray-700">{municipio}</div>
-        </div>
-      <div className="space-y-4">
-        {stages.map((s, idx) => (
-          <div key={s} className="flex items-start gap-4">
-            <div className="flex flex-col items-center">
-              <div className={`w-3 h-3 rounded-full transition-all relative ${idx <= stage? 'bg-utgsl-primary' : 'bg-utgsl-gray-300'}`}>
-                {idx === stage && <div className="w-3 h-3 rounded-full bg-utgsl-primary animate-ping absolute"></div>}
-              </div>
-              {idx < stages.length - 1 && <div className={`w-0.5 h-12 ${idx < stage? 'bg-utgsl-primary' : 'bg-utgsl-gray-200'}`}></div>}
-            </div>
-            <div className="flex-1 pb-4">
-              <div className={`font-medium ${idx <= stage? 'text-utgsl-gray-900' : 'text-utgsl-gray-400'}`}>{s}</div>
-              <div className="text-xs text-utgsl-gray-500 mt-1">{idx <= stage? times[idx] : 'Pendente'}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const DashboardOverlay = ({ incidents }) => {
-  const stats = useMemo(() => {
-    const total = incidents.length + Math.floor(Math.random() * 50) + 120;
-    const resolved = Math.floor(total * 0.73);
-    const pending = total - resolved;
-    const efficiency = ((resolved / total) * 100).toFixed(1);
-    const byMunicipio = {};
-    SimulationEngine.municipios.forEach(m => {
-      byMunicipio[m] = Math.floor(Math.random() * 20) + 5;
-    });
-    return { total, resolved, pending, efficiency, byMunicipio };
-  }, [incidents]);
-  return (
-    <div className="space-y-6">
-      <div className="grid-dashboard grid gap-4">
-        <div className="glass-effect rounded-lg p-6 shadow-glass border border-utgsl-gray-200">
-          <div className="text-xs font-semibold text-utgsl-gray-500 uppercase tracking-wide mb-2">Total de Ocorrências</div>
-          <div className="text-3xl font-bold text-utgsl-gray-900">{stats.total}</div>
-          <div className="text-xs text-utgsl-gray-500 mt-2">Últimas 24 horas</div>
-        </div>
-        <div className="glass-effect rounded-lg p-6 shadow-glass border border-utgsl-gray-200">
-          <div className="text-xs font-semibold text-utgsl-gray-500 uppercase tracking-wide mb-2">Taxa de Resolução</div>
-          <div className="text-3xl font-bold text-utgsl-primary">{stats.efficiency}%</div>
-          <div className="text-xs text-utgsl-gray-500 mt-2">{stats.resolved} resolvidas</div>
-        </div>
-        <div className="glass-effect rounded-lg p-6 shadow-glass border border-utgsl-gray-200">
-          <div className="text-xs font-semibold text-utgsl-gray-500 uppercase tracking-wide mb-2">Em Atendimento</div>
-          <div className="text-3xl font-bold text-amber-600">{stats.pending}</div>
-          <div className="text-xs text-utgsl-gray-500 mt-2">Tempo médio: 1h 42min</div>
-        </div>
-      </div>
-      <div className="glass-effect rounded-lg p-6 shadow-glass border border-utgsl-gray-200">
-        <div className="text-sm font-semibold text-utgsl-gray-900 mb-4">Distribuição por Município</div>
-        <div className="space-y-3">
-          {Object.entries(stats.byMunicipio).slice(0, 6).map(([mun, count]) => (
-            <div key={mun} className="flex items-center gap-3">
-              <div className="text-xs font-medium text-utgsl-gray-700 w-24">{mun}</div>
-              <div className="flex-1 bg-utgsl-gray-100 rounded-full h-2 overflow-hidden">
-                <div className="bg-utgsl-primary h-full rounded-full transition-all duration-1000" style={{ width: `${(count / 25) * 100}%` }}></div>
-              </div>
-              <div className="text-xs font-semibold text-utgsl-gray-900 w-8 text-right">{count}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="glass-effect rounded-lg p-6 shadow-glass border border-utgsl-gray-200">
-        <div className="text-sm font-semibold text-utgsl-gray-900 mb-3">Mapa de Calor Operacional</div>
-        <div className="grid grid-cols-3 gap-2">
-          {SimulationEngine.municipios.slice(0, 9).map(m => {
-            const intensity = Math.random();
-            const level = intensity > 0.7? 'Crítico' : intensity > 0.4? 'Atenção' : 'Normal';
-            const bgClass = intensity > 0.7? 'bg-red-500' : intensity > 0.4? 'bg-amber-500' : 'bg-utgsl-primary';
-            const borderClass = intensity > 0.7? 'border-red-500' : intensity > 0.4? 'border-amber-500' : 'border-utgsl-primary';
-            const textClass = intensity > 0.7? 'text-red-600' : intensity > 0.4? 'text-amber-600' : 'text-utgsl-primary';
-            return (
-              <div key={m} className={`${bgClass} bg-opacity-20 border ${borderClass} border-opacity-30 rounded p-3`}>
-                <div className="text-xs font-medium text-utgsl-gray-900">{m}</div>
-                <div className={`text-xs mt-1 ${textClass}`}>{level}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const OperatorMode = ({ onExit }) => {
-  const [queue, setQueue] = useState([
-    { id: 1, priority: 'Alta', wait: '00:42', topic: 'Alagamento em via principal' },
-    { id: 2, priority: 'Média', wait: '01:18', topic: 'Coleta não realizada' },
-    { id: 3, priority: 'Baixa', wait: '02:05', topic: 'Solicitação de informação' }
-  ]);
-  return (
-    <div className="space-y-6">
-      <div className="glass-effect rounded-lg p-6 border border-utgsl-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <div className="text-sm font-semibold text-utgsl-gray-900">Central de Atendimento UTGSL</div>
-            <div className="text-xs text-utgsl-gray-500 mt-1">Modo Operador Ativo</div>
-          </div>
-          <button onClick={onExit} className="text-xs font-medium text-utgsl-primary hover:text-utgsl-primaryDark">
-            Retornar ao Sistema
-          </button>
-        </div>
-        <div className="bg-utgsl-primary/5 border border-utgsl-primary/20 rounded p-4 text-sm text-utgsl-gray-700">
-          Atendimento estruturado em curso. Todas as interações são registradas para auditoria e melhoria contínua do serviço.
-        </div>
-      </div>
-      <div className="glass-effect rounded-lg p-6 border border-utgsl-gray-200">
-        <div className="text-sm font-semibold text-utgsl-gray-900 mb-4">Fila de Atendimento Prioritário</div>
-        <div className="space-y-2">
-          {queue.map(item => (
-            <div key={item.id} className="flex items-center justify-between p-3 bg-white rounded border border-utgsl-gray-200">
-              <div className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full ${item.priority === 'Alta'? 'bg-red-600' : item.priority === 'Média'? 'bg-amber-500' : 'bg-utgsl-gray-400'}`}></div>
-                <div>
-                  <div className="text-sm font-medium text-utgsl-gray-900">{item.topic}</div>
-                  <div className="text-xs text-utgsl-gray-500">Prioridade {item.priority}</div>
-                </div>
-              </div>
-              <div className="text-xs font-mono text-utgsl-gray-700">{item.wait}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ChatEngine = () => {
-  const [messages, setMessages] = useState([]);
-  const [view, setView] = useState('chat');
-  const [incidents, setIncidents] = useState([]);
-  const [isTyping, setIsTyping] = useState(false);
-  const [context, setContext] = useState({ municipio: '', bairro: '' });
-  const messagesEndRef = useRef(null);
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-  useEffect(scrollToBottom, [messages]);
-  useEffect(() => {
-    addSystemMessage("Plataforma de Comando UTGSL inicializada. Sistema operacional.");
-    setTimeout(() => {
-      addSystemMessage("Selecione um município para visualizar status urbano em tempo real, ou inicie um registro de ocorrência.");
-    }, 1200);
-  }, []);
-  const addSystemMessage = (content, component = null) => {
-    setMessages(prev => [...prev, { id: Date.now() + Math.random(), type: 'system', content, component, timestamp: new Date() }]);
-  };
-  const addUserMessage = (content) => {
-    setMessages(prev => [...prev, { id: Date.now() + Math.random(), type: 'user', content, timestamp: new Date() }]);
-  };
-  const simulateTyping = async (duration = 1500) => {
-    setIsTyping(true);
-    await new Promise(r => setTimeout(r, duration));
-    setIsTyping(false);
-  };
-  const handleIncidentComplete = async (incidentData) => {
-    addUserMessage(`Ocorrência registrada: ${SimulationEngine.incidentTypes.find(t => t.id === incidentData.tipo)?.label} em ${incidentData.bairro}, ${incidentData.municipio}`);
-    await simulateTyping(2000);
-    addSystemMessage(`Ocorrência registada | Protocolo: ${incidentData.ticket}`, <OperationalResponse ticket={incidentData.ticket} municipio={incidentData.municipio} />);
-    await simulateTyping(2500);
-    addSystemMessage(`Alerta Preditivo: ${incidentData.alert}`);
-    setIncidents(prev => [...prev, incidentData]);
-    setContext({ municipio: incidentData.municipio, bairro: incidentData.bairro });
-  };
-  const handleMunicipioSelect = async (mun) => {
-    setContext(prev => ({...prev, municipio: mun }));
-    addUserMessage(`Consultar status: ${mun}`);
-    await simulateTyping();
-    addSystemMessage(`Dados operacionais carregados para ${mun}.`, <StatusCards municipio={mun} bairro={context.bairro} />);
-  };
-  return (
-    <div className="min-h-screen bg-utgsl-bg">
-      <header className="glass-effect border-b border-utgsl-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-utgsl-primary rounded-lg flex items-center justify-center">
-                <div className="w-6 h-6 border-2 border-white rounded"></div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-utgsl-gray-900">UTGSL</div>
-                <div className="text-xs text-utgsl-gray-500">Unidade Técnica de Gestão de Saneamento de Luanda</div>
-              </div>
-            </div>
-            <nav className="flex items-center gap-2">
-              <button onClick={() => setView('chat')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'chat'? 'bg-utgsl-primary text-white' : 'text-utgsl-gray-700 hover:bg-utgsl-gray-100'}`}>
-                Comando
-              </button>
-              <button onClick={() => setView('dashboard')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'dashboard'? 'bg-utgsl-primary text-white' : 'text-utgsl-gray-700 hover:bg-utgsl-gray-100'}`}>
-                Dashboard Executivo
-              </button>
-              <button onClick={() => setView('operator')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'operator'? 'bg-utgsl-primary text-white' : 'text-utgsl-gray-700 hover:bg-utgsl-gray-100'}`}>
-                Central
-              </button>
-            </nav>
-          </div>
+          <span className="text-xs bg-utgsl-primary/10 text-utgsl-primary px-3 py-1 rounded-full font-medium">SISTEMA ATIVO</span>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {view === 'dashboard' && <DashboardOverlay incidents={incidents} />}
-        {view === 'operator' && <OperatorMode onExit={() => setView('chat')} />}
-        {view === 'chat' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 space-y-6">
-              <div className="glass-effect rounded-lg p-6 shadow-glass border border-utgsl-gray-200">
-                <div className="text-sm font-semibold text-utgsl-gray-900 mb-4">Consulta Rápida de Município</div>
-                <div className="space-y-2">
-                  {SimulationEngine.municipios.slice(0, 5).map(mun => (
-                    <button key={mun} onClick={() => handleMunicipioSelect(mun)} className="w-full text-left px-3 py-2 rounded text-sm text-utgsl-gray-700 hover:bg-utgsl-gray-50 transition-all">
-                      {mun}
-                    </button>
-                  ))}
-                </div>
+
+      <main className="max-w-5xl mx-auto">
+        <StatusCards municipio={form.municipio} bairro={form.bairro} />
+
+        <div className="bg-white rounded-xl shadow-elevated p-6 border border-utgsl-gray-200">
+          <h2 className="text-lg font-semibold mb-6 text-utgsl-gray-900">Registrar Nova Ocorrência</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-utgsl-gray-700 mb-1">Município</label>
+                <select 
+                  className="w-full p-2.5 rounded-lg border border-utgsl-gray-300 focus:ring-2 focus:ring-utgsl-primary outline-none"
+                  onChange={(e) => setForm({...form, municipio: e.target.value, bairro: ''})}
+                >
+                  <option value="">Selecionar...</option>
+                  {SimulationEngine.municipios.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
               </div>
-              <div className="glass-effect rounded-lg p-6 shadow-glass border border-utgsl-gray-200">
-                <div className="text-sm font-semibold text-utgsl-gray-900 mb-4">Registrar Nova Ocorrência</div>
-                <IncidentFlow onComplete={handleIncidentComplete} />
+
+              <div>
+                <label className="block text-sm font-medium text-utgsl-gray-700 mb-1">Bairro</label>
+                <select 
+                  className="w-full p-2.5 rounded-lg border border-utgsl-gray-300 focus:ring-2 focus:ring-utgsl-primary outline-none"
+                  disabled={!form.municipio}
+                  onChange={(e) => setForm({...form, bairro: e.target.value})}
+                >
+                  <option value="">Selecionar...</option>
+                  {form.municipio && SimulationEngine.bairros[form.municipio].map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
               </div>
-              <div className="glass-effect rounded-lg p-4 border border-utgsl-gray-200">
-                <div className="text-xs text-utgsl-gray-500 leading-relaxed">
-                  Para acesso contínuo em áreas de baixa conectividade, utilize canais alternativos como SMS/USSD através do código *XXX#.
-                </div>
+
+              <div>
+                <label className="block text-sm font-medium text-utgsl-gray-700 mb-1">Tipo de Incidente</label>
+                <select 
+                  className="w-full p-2.5 rounded-lg border border-utgsl-gray-300 focus:ring-2 focus:ring-utgsl-primary outline-none"
+                  onChange={(e) => setForm({...form, tipo: e.target.value})}
+                >
+                  <option value="">Selecionar...</option>
+                  {SimulationEngine.incidentTypes.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                </select>
               </div>
+
+              <button 
+                onClick={handleSubmit}
+                className="w-full bg-utgsl-primary hover:bg-utgsl-primaryDark text-white font-bold py-3 rounded-lg transition-colors"
+              >
+                Gerar Ticket de Comando
+              </button>
             </div>
-            <div className="lg:col-span-2">
-              <div className="glass-effect rounded-lg shadow-glass border border-utgsl-gray-200 h-[calc(100vh-12rem)] flex flex-col">
-                <div className="px-6 py-4 border-b border-utgsl-gray-200">
-                  <div className="text-sm font-semibold text-utgsl-gray-900">Canal de Comunicação Operacional</div>
-                  <div className="text-xs text-utgsl-gray-500 mt-1">Sistema em operação | Dados sincronizados</div>
-                </div>
-                <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scroll-smooth">
-                  {messages.map(msg => (
-                    <div key={msg.id} className={`flex ${msg.type === 'user'? 'justify-end
+
+            <div className="bg-utgsl-gray-50 rounded-lg p-4 flex flex-col justify-center items-center border-2 border-dashed border-utgsl-gray-200">
+              {form.tipo ? (
+                <img src={SimulationEngine.imageLibrary[form.tipo][0]} className="rounded-lg object-cover h-48 w-full mb-2" alt="Preview" />
+              ) : (
+                <p className="text-utgsl-gray-500 text-sm text-center">Selecione um tipo de incidente para visualizar a evidência base</p>
+              )}
+            </div>
+          </div>
+
+          {ticket && (
+            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-green-800 font-medium text-center text-sm">
+                Protocolo Gerado com Sucesso: <span className="font-mono font-bold">{ticket}</span>
+              </p>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<Dashboard />);
+</script>
+</body>
+</html>
