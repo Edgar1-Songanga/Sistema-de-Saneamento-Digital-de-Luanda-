@@ -2,17 +2,32 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>UTGSL - Plataforma de Saneamento Urbano</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@19/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@19/umd/react-dom.production.min.js"></script>
+    
+    <!-- React 18 from unpkg (more reliable) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel Standalone -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
         }
 
         body {
@@ -21,52 +36,302 @@
                 sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-        }
-
-        .dark {
-            color-scheme: dark;
-        }
-
-        .dark body {
-            background-color: #0f172a;
-            color: #e2e8f0;
-        }
-
-        .light body {
             background-color: #ffffff;
             color: #1e293b;
         }
 
-        /* Smooth transitions */
-        * {
-            transition: background-color 0.3s ease, color 0.3s ease;
+        body.dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
         }
 
-        .sticky-header {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-        }
-
-        .min-h-screen {
+        #root {
+            width: 100%;
             min-height: 100vh;
-        }
-
-        .flex-col {
             display: flex;
             flex-direction: column;
         }
 
-        .flex-1 {
-            flex: 1;
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            width: 100%;
         }
 
-        .mt-auto {
-            margin-top: auto;
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            width: 100%;
+            border-bottom: 1px solid #e2e8f0;
+            background-color: #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        body.dark-mode .app-header {
+            border-bottom-color: #1e293b;
+            background-color: #0f172a;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .app-main {
+            flex: 1;
+            width: 100%;
+        }
+
+        .app-footer {
+            width: 100%;
+            border-top: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+            padding: 1.5rem;
+        }
+
+        body.dark-mode .app-footer {
+            border-top-color: #1e293b;
+            background-color: #1e293b;
+        }
+
+        .header-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            height: 4rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e60af;
+        }
+
+        body.dark-mode .header-title h1 {
+            color: #60a5fa;
+        }
+
+        .header-title p {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        body.dark-mode .header-title p {
+            color: #94a3b8;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            border-radius: 9999px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .btn-icon:hover {
+            background-color: #f1f5f9;
+        }
+
+        body.dark-mode .btn-icon:hover {
+            background-color: #1e293b;
+        }
+
+        .btn-icon svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            color: #334155;
+        }
+
+        body.dark-mode .btn-icon svg {
+            color: #cbd5e1;
+        }
+
+        .language-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            width: 10rem;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        body.dark-mode .language-menu {
+            background-color: #1e293b;
+            border-color: #334155;
+        }
+
+        .language-menu button {
+            width: 100%;
+            text-align: left;
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #334155;
+            transition: background-color 0.2s;
+        }
+
+        body.dark-mode .language-menu button {
+            color: #cbd5e1;
+        }
+
+        .language-menu button:hover {
+            background-color: #f1f5f9;
+        }
+
+        body.dark-mode .language-menu button:hover {
+            background-color: #334155;
+        }
+
+        .language-menu button.active {
+            background-color: #eff6ff;
+            color: #1e60af;
+        }
+
+        body.dark-mode .language-menu button.active {
+            background-color: #1e3a8a;
+            color: #60a5fa;
+        }
+
+        .language-menu button:not(:last-child) {
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        body.dark-mode .language-menu button:not(:last-child) {
+            border-bottom-color: #334155;
+        }
+
+        .main-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 3rem 1rem;
+            width: 100%;
+        }
+
+        .content-box {
+            max-width: 42rem;
+            margin: 0 auto;
+        }
+
+        .content-box h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #1e60af;
+            margin-bottom: 1rem;
+        }
+
+        body.dark-mode .content-box h1 {
+            color: #60a5fa;
+        }
+
+        .content-box p {
+            font-size: 1.125rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        body.dark-mode .content-box p {
+            color: #94a3b8;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .card {
+            background-color: #1e293b;
+            border-color: #334155;
+        }
+
+        .card p {
+            color: #1e293b;
+            line-height: 1.625;
+        }
+
+        body.dark-mode .card p {
+            color: #e2e8f0;
+        }
+
+        .footer-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        body.dark-mode .footer-content {
+            color: #94a3b8;
+        }
+
+        .footer-content p:last-child {
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        body.dark-mode .footer-content p:last-child {
+            color: #e2e8f0;
+        }
+
+        .language-selector-wrapper {
+            position: relative;
+        }
+
+        @media (max-width: 640px) {
+            .header-content {
+                padding: 0 0.75rem;
+            }
+
+            .main-content {
+                padding: 1.5rem 1rem;
+            }
+
+            .content-box h1 {
+                font-size: 1.875rem;
+            }
+
+            .content-box p {
+                font-size: 1rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
-<body class="light">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
@@ -74,24 +339,25 @@
 
         // ============ CONTEXTS ============
 
-        // Theme Context
-        const ThemeContext = createContext(undefined);
+        const ThemeContext = createContext(null);
+        const LanguageContext = createContext(null);
 
-        function ThemeProvider({ children, defaultTheme = 'light' }) {
+        function ThemeProvider({ children }) {
             const [theme, setTheme] = useState(() => {
-                const stored = localStorage.getItem('theme');
-                return stored || defaultTheme;
+                if (typeof window !== 'undefined') {
+                    const stored = localStorage.getItem('utgsl-theme');
+                    return stored || 'light';
+                }
+                return 'light';
             });
 
             useEffect(() => {
-                const root = document.documentElement;
-                document.body.className = theme;
                 if (theme === 'dark') {
-                    root.classList.add('dark');
+                    document.body.classList.add('dark-mode');
                 } else {
-                    root.classList.remove('dark');
+                    document.body.classList.remove('dark-mode');
                 }
-                localStorage.setItem('theme', theme);
+                localStorage.setItem('utgsl-theme', theme);
             }, [theme]);
 
             const toggleTheme = () => {
@@ -113,17 +379,17 @@
             return context;
         }
 
-        // Language Context
-        const LanguageContext = createContext(undefined);
-
         function LanguageProvider({ children }) {
             const [language, setLanguageState] = useState(() => {
-                const stored = localStorage.getItem('language');
-                return stored || 'pt';
+                if (typeof window !== 'undefined') {
+                    const stored = localStorage.getItem('utgsl-language');
+                    return stored || 'pt';
+                }
+                return 'pt';
             });
 
             useEffect(() => {
-                localStorage.setItem('language', language);
+                localStorage.setItem('utgsl-language', language);
             }, [language]);
 
             const setLanguage = (lang) => {
@@ -157,15 +423,13 @@
                     poweredBy: 'Powered by Magestade Pura Digital',
                     allRightsReserved: 'Todos os direitos reservados',
                 },
-                theme: {
-                    light: 'Claro',
-                    dark: 'Escuro',
-                },
                 language: {
                     pt: 'Português',
                     en: 'English',
                 },
                 home: {
+                    title: 'UTGSL',
+                    subtitle: 'Unidade de Gestão de Saneamento Urbano de Luanda',
                     description: 'Plataforma de Comando de Saneamento Inteligente para a Unidade de Gestão de Saneamento Urbano de Luanda.',
                 },
             },
@@ -178,15 +442,13 @@
                     poweredBy: 'Powered by Magestade Pura Digital',
                     allRightsReserved: 'All rights reserved',
                 },
-                theme: {
-                    light: 'Light',
-                    dark: 'Dark',
-                },
                 language: {
                     pt: 'Português',
                     en: 'English',
                 },
                 home: {
+                    title: 'UTGSL',
+                    subtitle: 'Urban Sanitation Management Unit of Luanda',
                     description: 'Smart Sanitation Command Platform for the Urban Sanitation Management Unit of Luanda.',
                 },
             },
@@ -198,62 +460,54 @@
             const { theme, toggleTheme } = useTheme();
             const { language, setLanguage } = useLanguage();
             const t = translations[language];
-
             const [showLanguageMenu, setShowLanguageMenu] = useState(false);
 
             return (
-                <header className="sticky-header border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900 shadow-sm">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
-                        {/* Logo/Title */}
-                        <div className="flex flex-col">
-                            <h1 className="text-xl font-bold text-blue-700 dark:text-blue-400">
-                                {t.header.title}
-                            </h1>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {t.header.subtitle}
-                            </p>
+                <header className="app-header">
+                    <div className="header-content">
+                        <div className="header-title">
+                            <h1>{t.header.title}</h1>
+                            <p>{t.header.subtitle}</p>
                         </div>
 
-                        {/* Right side controls */}
-                        <div className="flex items-center gap-2">
-                            {/* Theme Toggle */}
+                        <div className="header-controls">
                             <button
                                 onClick={toggleTheme}
-                                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                className="btn-icon"
                                 title={theme === 'light' ? 'Modo escuro' : 'Modo claro'}
+                                aria-label="Toggle theme"
                             >
                                 {theme === 'light' ? (
-                                    <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
                                     </svg>
                                 ) : (
-                                    <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.536l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.828-2.828a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414l.707.707zm.707 5.657a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 1.414l-.707.707zM9 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-4.536-.464a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zm2.828-2.828a1 1 0 001.414-1.414L5.586 9.172a1 1 0 00-1.414 1.414l.707.707zM5 5a1 1 0 011.414-1.414L7.121 4.05a1 1 0 01-1.414 1.414L5 5z" clipRule="evenodd"></path>
                                     </svg>
                                 )}
                             </button>
 
-                            {/* Language Selector */}
-                            <div className="relative">
+                            <div className="language-selector-wrapper">
                                 <button
                                     onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-                                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                    className="btn-icon"
                                     title="Selecionar idioma"
+                                    aria-label="Select language"
                                 >
-                                    <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.3A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z" clipRule="evenodd"></path>
                                     </svg>
                                 </button>
+
                                 {showLanguageMenu && (
-                                    <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
+                                    <div className="language-menu">
                                         <button
                                             onClick={() => {
                                                 setLanguage('pt');
                                                 setShowLanguageMenu(false);
                                             }}
-                                            className={`w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                                                language === 'pt' ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : ''
-                                            }`}
+                                            className={language === 'pt' ? 'active' : ''}
                                         >
                                             {t.language.pt}
                                         </button>
@@ -262,9 +516,7 @@
                                                 setLanguage('en');
                                                 setShowLanguageMenu(false);
                                             }}
-                                            className={`w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 border-t border-gray-200 dark:border-gray-700 ${
-                                                language === 'en' ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : ''
-                                            }`}
+                                            className={language === 'en' ? 'active' : ''}
                                         >
                                             {t.language.en}
                                         </button>
@@ -283,16 +535,10 @@
             const currentYear = new Date().getFullYear();
 
             return (
-                <footer className="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-slate-800 py-6 mt-auto">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex flex-col items-center justify-center gap-2 text-center text-sm text-gray-600 dark:text-gray-400">
-                            <p>
-                                © {currentYear} UTGSL. {t.footer.allRightsReserved}.
-                            </p>
-                            <p className="font-medium text-gray-900 dark:text-gray-200">
-                                {t.footer.poweredBy}
-                            </p>
-                        </div>
+                <footer className="app-footer">
+                    <div className="footer-content">
+                        <p>© {currentYear} UTGSL. {t.footer.allRightsReserved}.</p>
+                        <p>{t.footer.poweredBy}</p>
                     </div>
                 </footer>
             );
@@ -303,35 +549,27 @@
             const t = translations[language];
 
             return (
-                <div className="w-full">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                        <div className="max-w-2xl mx-auto">
-                            <h1 className="text-4xl font-bold text-blue-700 dark:text-blue-400 mb-4">
-                                {t.header.title}
-                            </h1>
-                            <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-                                {t.header.subtitle}
-                            </p>
-                            <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 shadow-sm">
-                                <p className="text-gray-900 dark:text-gray-100 leading-relaxed">
-                                    {t.home.description}
-                                </p>
+                <main className="app-main">
+                    <div className="main-content">
+                        <div className="content-box">
+                            <h1>{t.home.title}</h1>
+                            <p>{t.home.subtitle}</p>
+                            <div className="card">
+                                <p>{t.home.description}</p>
                             </div>
                         </div>
                     </div>
-                </div>
+                </main>
             );
         }
 
         function App() {
             return (
-                <ThemeProvider defaultTheme="light">
+                <ThemeProvider>
                     <LanguageProvider>
-                        <div className="flex flex-col min-h-screen bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100">
+                        <div className="app-container">
                             <Header />
-                            <main className="flex-1">
-                                <Home />
-                            </main>
+                            <Home />
                             <Footer />
                         </div>
                     </LanguageProvider>
@@ -345,5 +583,4 @@
         root.render(<App />);
     </script>
 </body>
-  </html>
-  
+</html>
